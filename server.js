@@ -212,7 +212,6 @@ setInterval(() => {
   for (const t in tokens) if (tokens[t].expiry < now) delete tokens[t];
 }, 60 * 1000);
 
-const PORT = 3000;
-server.listen(PORT, () =>
-  console.log(`Ephemeral running at http://localhost:${PORT}`)
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log('...'));
 );
