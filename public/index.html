@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Ephemeral Chat</title>
+  <title>D54da65s4da456d</title>
   <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
   <link href="https://unpkg.com/nes.css/css/nes.min.css" rel="stylesheet" />
   <style>
@@ -151,6 +151,7 @@ const messagesDiv = document.getElementById('messages');
 const usersDiv = document.getElementById('users');
 const spamWarning = document.getElementById('spam-warning');
 const fileInput = document.getElementById('fileInput');
+const loginButton = document.getElementById('join');
 
 function addMessage(name, text, file = null, notice = false, isOwner = false) {
   const div = document.createElement('div');
@@ -190,6 +191,7 @@ function updateUsers(list){
 }
 
 document.getElementById('join').onclick = async () => {
+  loginButton.disabled = true;
   const pwd = document.getElementById('pwd').value.trim();
   const name = (document.getElementById('name').value.trim()||'anon').slice(0,64);
 
@@ -197,11 +199,22 @@ document.getElementById('join').onclick = async () => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: pwd, name })
-  }).catch(()=> { statusEl.textContent = 'Server not reachable'; return; });
+  }).catch(()=> { 
+    statusEl.textContent = 'Server not reachable'; 
+    loginButton.disabled = false;
+    return;
+  });
 
-  if(!res) return;
+  if(!res) {
+    loginButton.disabled = false;
+    return;
+  }
   const data = await res.json();
-  if(!data.ok) { statusEl.textContent='Wrong password'; return; }
+  if(!data.ok) { 
+    statusEl.textContent='Wrong password'; 
+    loginButton.disabled = false;
+    return;
+  }
 
   token = data.token;
   user = data.user;
