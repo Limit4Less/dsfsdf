@@ -17,6 +17,7 @@ const wss = new WebSocket.Server({ server });
 const CHAT_PASSWORD = process.env.CHAT_PASSWORD || "default_guest_password";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "default_owner_password";
 const OWNER_NAME = process.env.OWNER_NAME || "default_owner_name";
+
 // pre-hash passwords asynchronously
 let CHAT_HASH, OWNER_HASH;
 (async () => {
@@ -206,6 +207,34 @@ function broadcastUsers() {
   });
 }
 
+// --- Cleanup functions ---
+async function clearAll() {
+  // Clear messages from server memory
+  messages = [];
+
+  // Delete all files in the uploads directory
+  fs.readdir(UPLOAD_DIR, (err, files) => {
+    if (err) {
+      console.error("Error reading upload directory:", err);
+      return;
+    }
+    for (const file of files) {
+      fs.unlink(path.join(UPLOAD_DIR, file), (err) => {
+        if (err) console.error("Error deleting file:", err);
+      });
+    }
+  });
+
+  // Broadcast to all clients to trigger the cleanup animations
+  broadcast({ type: "cleared", ts: Date.now() });
+  broadcast({ type: "filesCleared", ts: Date.now() });
+}
+
+// Set a timer to automatically clear all messages and uploads every 30 minutes
+const thirtyMinutesInMs = 30 * 60 * 1000;
+setInterval(clearAll, thirtyMinutesInMs);
+
+
 // --- Cleanup tokens ---
 setInterval(() => {
   const now = Date.now();
@@ -213,4 +242,6 @@ setInterval(() => {
 }, 60 * 1000);
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Ephemeral running at http://localhost:${PORT}`));
+server.listen(PORT, () =>
+  console.log(`Ephemeral running at http://localhost:${PORT}`)
+);
