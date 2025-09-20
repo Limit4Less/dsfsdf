@@ -186,6 +186,21 @@ wss.on("connection", (ws, req) => {
   ws.on("close", () => {
     onlineUsers.delete(ws);
     broadcastUsers();
+    
+    // Check if there are no more online users and clear everything
+    if (onlineUsers.size === 0) {
+      messages = [];
+      fs.readdir(UPLOAD_DIR, (err, files) => {
+        if (err) throw err;
+        for (const file of files) {
+          fs.unlink(path.join(UPLOAD_DIR, file), (err) => {
+            if (err) throw err;
+          });
+        }
+      });
+      broadcast({ type: "cleared", ts: Date.now() });
+      broadcast({ type: "filesCleared", ts: Date.now() });
+    }
   });
 });
 
