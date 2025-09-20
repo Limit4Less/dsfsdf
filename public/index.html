@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>D54da65s4da456d</title>
+  <title>da21d5s1adad1as561</title>
   <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
   <link href="https://unpkg.com/nes.css/css/nes.min.css" rel="stylesheet" />
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
@@ -15,6 +19,7 @@
       font-family: "Press Start 2P", monospace;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
     }
 
     .owner-icon {
@@ -40,23 +45,57 @@
     }
 
     #chat-container {
-      display: none;
+      flex: 1;
+      display: none; /* Chat container is hidden by default */
       flex-direction: column;
       width: 100%;
       height: 100%;
-      box-sizing: border-box;
       padding: 1rem;
     }
 
-    #messages {
+    body.logged-in #login {
+      display: none;
+    }
+
+    .chat-columns {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 6rem); /* Account for container padding */
+    }
+
+    .user-list {
+      flex-basis: 200px;
+      min-width: 150px;
+      border-right: 2px solid #0f0;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0; /* Important for flex child to shrink */
+    }
+    
+    .chat-scrollable-area {
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden;
       padding: 1rem;
       border: 2px solid #0f0;
       margin-bottom: 1rem;
+      margin-left: 1rem;
+      max-height: calc(100vh - 12rem); /* Ensure it doesn't grow too large */
     }
 
-    .msg { 
+    #messages {
+      word-wrap: break-word;
+      word-break: break-all;
+      min-height: 100%;
+    }
+
+    .msg {
       margin: 0.5rem 0;
       opacity: 1;
       transition: opacity 0.5s ease;
@@ -66,14 +105,16 @@
 
     .name { color: #0ff; margin-right: 0.5rem; }
     .owner-name { color: #ff0; margin-right: 0.5rem; }
-    
+
     .notice { color: #ff0; font-style: italic; }
 
     #composer {
       display: flex;
       gap: 0.5rem;
       border-top: 2px solid #0f0;
-      padding-top: 0.5rem;
+      padding: 0.5rem;
+      margin-left: 1rem;
+      flex-shrink: 0; /* Don't shrink the composer */
     }
 
     img, video {
@@ -109,6 +150,59 @@
         filter: hue-rotate(360deg);
       }
     }
+
+    /* Custom scrollbar styling for webkit browsers */
+    .chat-scrollable-area::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-scrollable-area::-webkit-scrollbar-track {
+      background: #000;
+      border: 1px solid #0f0;
+    }
+
+    .chat-scrollable-area::-webkit-scrollbar-thumb {
+      background: #0f0;
+      border-radius: 0;
+    }
+
+    .chat-scrollable-area::-webkit-scrollbar-thumb:hover {
+      background: #0ff;
+    }
+
+    /* Cat raid animation styles */
+    .cat-raid-image {
+      position: fixed;
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border: 3px solid #0f0;
+      border-radius: 12px;
+      z-index: 9999;
+      animation: catFall 10s linear forwards;
+      pointer-events: none;
+      box-shadow: 0 0 10px #0f0;
+    }
+
+    @keyframes catFall {
+      0% {
+        transform: translateY(-150px) rotate(0deg) scale(0.5);
+        opacity: 1;
+      }
+      50% {
+        transform: translateY(50vh) rotate(180deg) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(calc(100vh + 150px)) rotate(720deg) scale(0.8);
+        opacity: 0;
+      }
+    }
+
+    #spam-warning {
+      margin-left: 1rem;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -125,15 +219,17 @@
 
 <div id="chat-container" class="nes-container is-dark with-title">
   <p class="title">Chat Room</p>
-  <div style="display: flex; flex:1; height: 80vh;">
-    <div style="width:200px; border-right:2px solid #0f0; padding:1rem;">
+  <div class="chat-columns">
+    <div class="user-list">
       <h2 class="nes-text is-success">Online</h2>
       <div id="users"></div>
     </div>
-    <div style="flex:1; display:flex; flex-direction:column;">
-      <div id="messages"></div>
+    <div class="chat-panel">
+      <div class="chat-scrollable-area">
+        <div id="messages"></div>
+      </div>
       <div id="composer">
-        <input id="msg" class="nes-input is-dark" placeholder="Type a message">
+        <input id="msg" class="nes-input is-dark" placeholder="Type a message" maxlength="500">
         <input type="file" id="fileInput" class="nes-input is-dark">
         <button id="send" class="nes-btn is-success">Send</button>
       </div>
@@ -152,14 +248,30 @@ const usersDiv = document.getElementById('users');
 const spamWarning = document.getElementById('spam-warning');
 const fileInput = document.getElementById('fileInput');
 const loginButton = document.getElementById('join');
+const sendButton = document.getElementById('send');
+const msgInput = document.getElementById('msg');
+
+let messageCount = 0;
+let lastMessageTime = Date.now();
+const messageLimit = 5;
+const waitTime = 5000; // 5 seconds
 
 function addMessage(name, text, file = null, notice = false, isOwner = false) {
   const div = document.createElement('div');
   div.className = notice ? 'notice' : 'msg';
 
+  let nameClass = isOwner ? 'owner-name' : 'name';
+  let nameContent = name;
+  
+  // Apply rainbow effect to "Jeb_" in messages
+  if (name === 'Jeb_') {
+    nameContent = `<span class="rainbow-text">${name}</span>`;
+    nameClass = ''; // Don't apply additional color class
+  }
+
   let content = notice
     ? text
-    : `<span class="${isOwner ? 'owner-name' : 'name'}">${name}</span>: ${text}`;
+    : `<span class="${nameClass}">${nameContent}</span>: ${text}`;
 
   if (file) {
     const ext = file.split('.').pop().toLowerCase();
@@ -170,7 +282,13 @@ function addMessage(name, text, file = null, notice = false, isOwner = false) {
 
   div.innerHTML = content;
   messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  
+  // Auto-scroll to bottom with a small delay to ensure DOM is updated
+  const scrollableArea = document.querySelector('.chat-scrollable-area');
+  setTimeout(() => {
+    scrollableArea.scrollTop = scrollableArea.scrollHeight;
+  }, 10);
+  
   return div;
 }
 
@@ -181,13 +299,102 @@ function updateUsers(list){
     if(u.includes("👑")){
       const ownerName = u.replace(" 👑", "");
       div.innerHTML = `${ownerName} <i class="nes-octocat animate"></i>`;
-    } else if (u === 'YourNameHere') { // Replace 'YourNameHere' with your actual display name
+    } else if (u === 'Jeb_') {
       div.innerHTML = `<span class="rainbow-text">${u}</span>`;
     } else {
       div.textContent = u;
     }
     usersDiv.appendChild(div);
   });
+}
+
+function startCatRaid() {
+  const catCount = 50; // LOTS of cats!
+  const duration = 10000; // 10 seconds
+  const spawnDuration = 8000; // Keep spawning for 8 seconds
+  
+  // Function to get a random cat image URL
+  function getRandomCatUrl() {
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    const catSources = [
+      `https://cataas.com/cat?t=${timestamp}&r=${random}`,
+      `https://placekitten.com/${150 + Math.floor(Math.random() * 100)}/${150 + Math.floor(Math.random() * 100)}`,
+      `https://loremflickr.com/200/200/cat?random=${random}`,
+      `https://picsum.photos/200/200?random=${random}`, // Sometimes has cats
+      `https://cataas.com/cat/cute?t=${timestamp}&r=${random}`,
+      `https://cataas.com/cat/says/meow?fontSize=30&fontColor=white&t=${timestamp}`,
+      `https://robohash.org/cat${random}.png?set=set4&size=200x200`,
+      // Backup static cat images
+      `https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=200&h=200&fit=crop&crop=face`,
+      `https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=200&h=200&fit=crop&crop=face`,
+      `https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=200&h=200&fit=crop&crop=face`
+    ];
+    
+    return catSources[Math.floor(Math.random() * catSources.length)];
+  }
+  
+  // Spawn cats continuously for the first 8 seconds
+  const spawnInterval = setInterval(() => {
+    const cat = document.createElement('img');
+    cat.className = 'cat-raid-image';
+    
+    cat.src = getRandomCatUrl();
+    cat.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+    cat.style.top = '-150px';
+    
+    // Add random effects
+    cat.style.animationDelay = (Math.random() * 0.5) + 's';
+    cat.style.filter = `hue-rotate(${Math.random() * 360}deg) brightness(${0.8 + Math.random() * 0.4})`;
+    
+    // Handle image load errors
+    cat.onerror = function() {
+      this.src = `https://placekitten.com/200/200?random=${Math.floor(Math.random() * 10000)}`;
+    };
+    
+    document.body.appendChild(cat);
+    
+    // Remove the cat after animation completes
+    setTimeout(() => {
+      if (cat.parentNode) {
+        cat.parentNode.removeChild(cat);
+      }
+    }, duration + 2000);
+    
+  }, 200); // Spawn a cat every 200ms
+  
+  // Initial burst of cats
+  for (let i = 0; i < catCount; i++) {
+    setTimeout(() => {
+      const cat = document.createElement('img');
+      cat.className = 'cat-raid-image';
+      
+      cat.src = getRandomCatUrl();
+      cat.style.left = Math.random() * (window.innerWidth - 150) + 'px';
+      cat.style.top = '-150px';
+      cat.style.animationDelay = (Math.random() * 2) + 's';
+      cat.style.filter = `hue-rotate(${Math.random() * 360}deg) brightness(${0.8 + Math.random() * 0.4})`;
+      
+      // Handle image load errors with fallback
+      cat.onerror = function() {
+        this.src = `https://placekitten.com/200/200?random=${Math.floor(Math.random() * 10000)}`;
+      };
+      
+      document.body.appendChild(cat);
+      
+      setTimeout(() => {
+        if (cat.parentNode) {
+          cat.parentNode.removeChild(cat);
+        }
+      }, duration + 3000);
+      
+    }, Math.random() * 2000);
+  }
+  
+  // Stop spawning after 8 seconds
+  setTimeout(() => {
+    clearInterval(spawnInterval);
+  }, spawnDuration);
 }
 
 document.getElementById('join').onclick = async () => {
@@ -199,8 +406,8 @@ document.getElementById('join').onclick = async () => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password: pwd, name })
-  }).catch(()=> { 
-    statusEl.textContent = 'Server not reachable'; 
+  }).catch(()=> {
+    statusEl.textContent = 'Server not reachable';
     loginButton.disabled = false;
     return;
   });
@@ -210,8 +417,8 @@ document.getElementById('join').onclick = async () => {
     return;
   }
   const data = await res.json();
-  if(!data.ok) { 
-    statusEl.textContent='Wrong password'; 
+  if(!data.ok) {
+    statusEl.textContent='Wrong password';
     loginButton.disabled = false;
     return;
   }
@@ -222,7 +429,7 @@ document.getElementById('join').onclick = async () => {
   socket = new WebSocket(wsUrl);
 
   socket.onopen = ()=>{
-    loginDiv.style.display='none';
+    document.body.classList.add('logged-in');
     chatContainer.style.display='flex';
     socket.send(JSON.stringify({type:'join', name: user.displayName}));
   };
@@ -231,7 +438,7 @@ document.getElementById('join').onclick = async () => {
     const msg = JSON.parse(e.data);
     if(msg.type === 'message') addMessage(msg.name, msg.text, msg.file, false, msg.isOwner);
     if(msg.type === 'history') msg.messages.forEach(m=>addMessage(m.name, m.text, m.file, false, m.isOwner));
-    
+
     if(msg.type === 'cleared') {
       const allMessages = messagesDiv.querySelectorAll('.msg');
       allMessages.forEach(msgEl => {
@@ -256,34 +463,58 @@ document.getElementById('join').onclick = async () => {
         addMessage('SYSTEM','--- uploaded files were cleared ---',null,true);
       }, 500);
     }
-    
+
     if(msg.type === 'users') updateUsers(msg.list);
     if(msg.type === 'error') spamWarning.textContent=msg.msg;
+    
+    // Handle cat raid command
+    if(msg.type === 'message' && msg.text === '/catraid' && msg.isOwner) {
+      startCatRaid();
+      addMessage('SYSTEM', '🐱💥 MEGA CAT RAID INCOMING! PREPARE FOR FELINE CHAOS! 💥🐱', null, true);
+    }
   };
 
   socket.onclose = ()=> addMessage('SYSTEM','Disconnected.',null,true);
 };
 
 document.getElementById('send').onclick = () => {
-  const input = document.getElementById('msg');
-  const text = input.value.trim();
-  if(!text && !fileInput.files.length) return;
-  spamWarning.textContent='';
+  const text = msgInput.value.trim();
+  const file = fileInput.files[0];
 
-  // handle commands only if owner
+  // Anti-spam logic
+  const now = Date.now();
+  if (now - lastMessageTime < 1000) {
+    messageCount++;
+    if (messageCount >= messageLimit) {
+      spamWarning.textContent = `You are sending too many messages. Please wait ${waitTime / 1000} seconds.`;
+      sendButton.disabled = true;
+      setTimeout(() => {
+        sendButton.disabled = false;
+        messageCount = 0;
+        lastMessageTime = Date.now();
+        spamWarning.textContent = '';
+      }, waitTime);
+      return;
+    }
+  } else {
+    messageCount = 1;
+  }
+  lastMessageTime = now;
+
+  if(!text && !file) return;
+
   if(user && user.isOwner && text.startsWith("/")){
     socket.send(JSON.stringify({type:'message', name: user.displayName, text}));
-    input.value='';
+    msgInput.value='';
     return;
   }
 
   if(text) {
     socket.send(JSON.stringify({type:'message', name: user.displayName, text}));
-    input.value='';
+    msgInput.value='';
   }
 
-  if(fileInput.files.length) {
-    const file = fileInput.files[0];
+  if(file) {
     if(file.size > 10*1024*1024){ spamWarning.textContent='File too large (max 10MB)'; return; }
     const formData = new FormData();
     formData.append('file', file);
@@ -295,7 +526,10 @@ document.getElementById('send').onclick = () => {
 };
 
 document.getElementById('msg').addEventListener('keydown', e => {
-  if(e.key==='Enter') document.getElementById('send').click();
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('send').click();
+  }
 });
 </script>
 
