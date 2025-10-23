@@ -1,0 +1,72 @@
+<!-- --- Html Document ---
+     --- Ephemeral Chat Application ---
+     --- Everything Was Highlited for Customazation Purposes ---
+     --- This is all open source you can modify anything you want --- 
+     --- Made by windows98unc on Discord ---
+     --- Version 1.5.3 revert --- -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ephemeral Chat</title>
+
+  <!-- Fonts & NES.css -->
+  <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+  <link href="https://unpkg.com/nes.css/css/nes.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- === Login Form === -->
+  <div id="login">
+    <form class="nes-container is-dark">
+      <h1 class="nes-text is-success">Ephemeral</h1>
+      <input id="name" type="text" class="nes-input is-dark" placeholder="Display Name">
+      <input id="pwd" type="password" class="nes-input is-dark" placeholder="Password">
+      <button type="button" id="join" class="nes-btn is-success">Enter Chat</button>
+      <p id="status" class="nes-text is-error"></p>
+    </form>
+  </div>
+
+  <!-- === Chat Container === -->
+  <div id="chat-container" class="nes-container is-dark with-title" style="display: none;">
+    <p class="title">Chat Room</p>
+
+    <div class="chat-columns">
+      <!-- Users List -->
+      <div class="user-list">
+        <h2 class="nes-text is-success">Online</h2>
+        <div id="users"></div>
+      </div>
+
+      <!-- Chat Panel -->
+      <div class="chat-panel">
+        <div class="chat-scrollable-area">
+          <div id="messages" aria-live="polite"></div>
+        </div>
+
+        <div id="composer">
+          <!-- Command suggestion box -->
+          <div id="command-box"></div>
+
+          <!-- Message input -->
+          <input id="msg" class="nes-input is-dark" placeholder="Type a message" maxlength="500">
+
+          <!-- File input -->
+          <input type="file" id="fileInput" class="nes-input is-dark">
+
+          <!-- Send button -->
+          <button id="send" class="nes-btn is-success">Send</button>
+        </div>
+
+        <!-- Spam warning -->
+        <div id="spam-warning" class="nes-text is-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/chat.js"></script>
+</body>
+</html>

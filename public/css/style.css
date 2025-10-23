@@ -1,0 +1,215 @@
+/*  --- CSS Stylesheet ---
+    --- Ephemeral Chat Application ---
+    --- Everything Was Highlited for Customazation Purposes ---
+    --- Made by windows98unc on Discord ---
+    --- Version 1.5.2 --- */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: black;
+  color: #0f0;
+  font-family: "Press Start 2P", monospace;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* === Login & Chat Containers === */
+#login, #chat-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#login form {
+  background: black;
+  border: 4px solid #0f0;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#chat-container {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 1rem;
+}
+
+body.logged-in #login {
+  display: none;
+}
+
+/* === Columns === */
+.chat-columns {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 6rem);
+}
+
+.user-list {
+  flex-basis: 200px;
+  min-width: 150px;
+  border-right: 2px solid #0f0;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* === Messages === */
+.chat-scrollable-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  border: 2px solid #0f0;
+  margin-bottom: 1rem;
+  margin-left: 1rem;
+  max-height: calc(100vh - 12rem);
+}
+
+#messages {
+  word-wrap: break-word;
+  word-break: break-all;
+  min-height: 100%;
+}
+
+.msg {
+  margin: 0.5rem 0;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.msg.fade-out { opacity: 0; }
+
+.name { color: #0ff; margin-right: 0.5rem; }
+.owner-name { color: #ff0; margin-right: 0.5rem; }
+
+.notice { color: #ff0; font-style: italic; }
+
+#composer {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 2px solid #0f0;
+  padding: 0.5rem;
+  margin-left: 1rem;
+  flex-shrink: 0;
+}
+
+img, video {
+  max-width: 200px;
+  max-height: 200px;
+  border: 2px solid #0f0;
+  margin-top: 0.5rem;
+}
+
+#users div {
+  margin: 0.2rem 0;
+}
+
+/* === NES Inputs & Buttons === */
+.nes-input, .nes-btn {
+  font-family: "Press Start 2P", monospace;
+}
+
+/* === Rainbow Text === */
+.rainbow-text {
+  background-image: linear-gradient(
+    to right,
+    #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-animation 5s infinite;
+}
+
+@keyframes rainbow-animation {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* === Scrollbar Styling === */
+.chat-scrollable-area::-webkit-scrollbar {
+  width: 8px;
+}
+.chat-scrollable-area::-webkit-scrollbar-track {
+  background: #000;
+  border: 1px solid #0f0;
+}
+.chat-scrollable-area::-webkit-scrollbar-thumb {
+  background: #0f0;
+  border-radius: 0;
+}
+.chat-scrollable-area::-webkit-scrollbar-thumb:hover {
+  background: #0ff;
+}
+
+/* === Cat Raid Animation === */
+.cat-raid-image {
+  position: fixed;
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 3px solid #0f0;
+  border-radius: 12px;
+  z-index: 9999;
+  animation: catFall 10s linear forwards;
+  pointer-events: none;
+  box-shadow: 0 0 10px #0f0;
+}
+
+@keyframes catFall {
+  0% { transform: translateY(-150px) rotate(0deg) scale(0.5); opacity:1; }
+  50% { transform: translateY(50vh) rotate(180deg) scale(1); opacity:1; }
+  100% { transform: translateY(calc(100vh + 150px)) rotate(720deg) scale(0.8); opacity:0; }
+}
+
+#spam-warning {
+  margin-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+#command-box {
+  position: absolute;
+  bottom: 60px; /* above the composer input */
+  left: 1rem;
+  background: black;
+  border: 2px solid #0f0;
+  padding: 0.5rem;
+  display: none; /* hidden by default */
+  flex-direction: column;
+  gap: 0.3rem;
+  z-index: 1000;
+  max-width: 300px;
+}
+
+.command-btn {
+  background: #0f0;
+  color: black;
+  font-family: "Press Start 2P", monospace;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.command-btn:hover {
+  background: #0ff;
+  color: black;
+}
+
